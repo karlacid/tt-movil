@@ -1,84 +1,104 @@
-from kivy.uix.screenmanager import Screen
+from kivy.app import App
+from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.label import Label
+from kivy.uix.image import Image
 from kivy.uix.button import Button
-from kivy.graphics import Color, Rectangle
-from kivy.metrics import dp, sp
+from kivy.graphics import Color, Rectangle, RoundedRectangle
 from kivy.core.window import Window
+from kivy.metrics import dp, sp
+from kivy.uix.widget import Widget
+from logintel import PantallaLogin
+from controles import PantallaControles
+from pantallacolor import PantallaColor
+
+# REMOVIDO: Window.size = (760, 540)
+# Dejar que la ventana use el tamaño de la pantalla del dispositivo
 
 
-class PantallaColor(Screen):
-    """
-    Pantalla con 5 botones en hilera horizontal,
-    centrados y con el mismo margen izquierdo y derecho.
-    El 1 es más claro y el 5 más oscuro.
-    """
-    def __init__(self, name, start_color, end_color, **kwargs):
+class BotonPrincipal(Button):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.name = name
-        self.start_color = start_color
-        self.end_color = end_color
+        self.background_normal = ""
+        self.background_color = (0.05, 0.1, 0.2, 1)
+        self.color = (1, 1, 1, 1)
+        self.size_hint = (None, None)
+        self.size = (dp(250), dp(55))
+        self.font_size = sp(18)
+        self.bold = True
+
+        with self.canvas.before:
+            Color(*self.background_color)
+            self.rect = RoundedRectangle(pos=self.pos, size=self.size, radius=[dp(10)])
+        self.bind(pos=self.update_rect, size=self.update_rect)
+
+    def update_rect(self, *args):
+        self.rect.pos = self.pos
+        self.rect.size = self.size
+
+
+class PantallaBienvenida(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.name = "pantalla_bienvenida"
         self.build_ui()
 
     def build_ui(self):
-        # Fondo gris
-        with self.canvas.before:
+        main_layout = BoxLayout(orientation="vertical", spacing=dp(10), padding=dp(15))
+
+        with main_layout.canvas.before:
             Color(0.95, 0.95, 0.95, 1)
-            self.bg_rect = Rectangle(size=self.size, pos=self.pos)
+            self.bg_rect = Rectangle(size=Window.size, pos=self.pos)
         self.bind(size=self.update_bg, pos=self.update_bg)
 
-        # Layout principal
-        main_layout = BoxLayout(orientation="vertical")
-
         # Espaciador superior
-        main_layout.add_widget(BoxLayout(size_hint_y=0.5))
+        main_layout.add_widget(Widget(size_hint_y=0.15))
 
-        # Layout horizontal con espaciadores laterales
-        row_layout = BoxLayout(orientation="horizontal", size_hint_y=None, height=dp(200))
-
-        # Espaciador izquierdo
-        row_layout.add_widget(BoxLayout(size_hint_x=1))
-
-        # Hilera de botones
-        botones_layout = BoxLayout(
-            orientation="horizontal",
-            spacing=dp(20),
-            size_hint=(None, 1),
-            height=dp(200),
+        logo = Image(
+            source="Imagen5-Photoroom.png",
+            size_hint=(None, None),
+            size=(dp(120), dp(120)),
+            pos_hint={"center_x": 0.5},
         )
 
-        # Aumenta el ancho total del layout de los botones
-        botones_layout.width = (dp(200) * 5) + (dp(20) * 4)
+        main_layout.add_widget(logo)
 
-        for i in range(1, 6):
-            # 1 claro → 5 oscuro
-            t = (i - 1) / 4.0
-            r = self.start_color[0] + (self.end_color[0] - self.start_color[0]) * t
-            g = self.start_color[1] + (self.end_color[1] - self.start_color[1]) * t
-            b = self.start_color[2] + (self.end_color[2] - self.start_color[2]) * t
-            color_btn = (r, g, b, 1)
+        titulo = Label(
+            text="[b]PETOTECH[/b]",
+            markup=True,
+            font_size=sp(32),
+            color=(0, 0, 0, 1),
+            size_hint_y=None,
+            height=dp(50),
+        )
+        main_layout.add_widget(titulo)
 
-            btn = Button(
-                text=str(i),
-                font_size=sp(64), # Aumenta el tamaño de la fuente para que se vea bien
-                color=(1, 1, 1, 1),
-                background_normal="",
-                background_color=color_btn,
-                size_hint=(None, None),
-                size=(dp(175), dp(175)),  # Aumenta el tamaño del botón
-            )
-            # Asigna una función específica para cada botón que incluye el número
-            btn.bind(on_press=lambda instance, num=i: self.boton_presionado(instance, num))
-            botones_layout.add_widget(btn)
+        subtitulo = Label(
+            text="Tu solución tecnológica para el futuro",
+            font_size=sp(16),
+            color=(0.1, 0.3, 0.7, 1),
+            size_hint_y=None,
+            height=dp(35),
+        )
+        main_layout.add_widget(subtitulo)
 
-        row_layout.add_widget(botones_layout)
+        main_layout.add_widget(Widget(size_hint_y=0.15))
 
-        # Espaciador derecho
-        row_layout.add_widget(BoxLayout(size_hint_x=1))
+        boton = BotonPrincipal(text="TENGO UNA CONTRASEÑA")
+        boton.pos_hint = {"center_x": 0.5}
+        boton.on_press = self.go_to_login
 
-        main_layout.add_widget(row_layout)
+        main_layout.add_widget(boton)
 
-        # Espaciador inferior
-        main_layout.add_widget(BoxLayout(size_hint_y=0.5))
+        copyright_label = Label(
+            text="Copyright © 2025 - PetoTech System",
+            font_size=sp(12),
+            color=(0.3, 0.3, 0.3, 1),
+            size_hint_y=None,
+            height=dp(25),
+        )
+        main_layout.add_widget(Widget(size_hint_y=0.1))
+        main_layout.add_widget(copyright_label)
 
         self.add_widget(main_layout)
 
@@ -86,25 +106,29 @@ class PantallaColor(Screen):
         self.bg_rect.size = self.size
         self.bg_rect.pos = self.pos
 
-    def boton_presionado(self, instance, numero_boton):
-        """
-        Función que se ejecuta cuando se presiona un botón.
-        Indica qué botón fue presionado y luego regresa a la pantalla de controles.
-        """
-        print(f"Botón {numero_boton} presionado en la pantalla {self.name}")
-        
-        # Aquí puedes agregar más funcionalidades específicas para cada botón
-        # Por ejemplo, enviar comandos a hardware, cambiar estados, etc.
-        
-        # Mensaje específico según el color de la pantalla
-        if "azul" in self.name:
-            print(f"Puntaje azul establecida en {numero_boton}")
-        elif "roja" in self.name:
-            print(f"Puntaje roja establecida en  {numero_boton}")
-        
-        # Regresar a la pantalla de controles
-        self.manager.current = "controles"
+    def go_to_login(self):
+        self.manager.current = "pantalla_login"
 
-    def go_back(self, instance):
-        """Función alternativa para compatibilidad"""
-        self.manager.current = "controles"
+
+class PetoTechApp(App):
+    def build(self):
+        sm = ScreenManager()
+        sm.add_widget(PantallaBienvenida(name="pantalla_bienvenida"))
+        sm.add_widget(PantallaLogin(name="pantalla_login"))
+        sm.add_widget(PantallaControles(name="controles"))
+        sm.add_widget(PantallaColor(
+            name="pantalla_azul",
+            start_color=(0.5, 0.8, 1, 1),   # Azul claro
+            end_color=(0.1, 0.4, 0.7, 1)    # Azul oscuro
+        ))
+        sm.add_widget(PantallaColor(
+            name="pantalla_roja",
+            start_color=(1, 0.5, 0.5, 1),   # Rojo claro
+            end_color=(0.8, 0.1, 0.1, 1)    # Rojo oscuro
+        ))
+
+        return sm
+
+
+if __name__ == "__main__":
+    PetoTechApp().run()
