@@ -1,65 +1,27 @@
 from kivy.uix.screenmanager import Screen
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
-from kivy.uix.label import Label
-from kivy.uix.relativelayout import RelativeLayout
-from kivy.graphics import Color, RoundedRectangle, Rectangle, Triangle, Line
-from kivy.metrics import dp, sp
-from kivy.core.window import Window
 from kivy.uix.widget import Widget
-import requests
-
-# Dirección del servidor Flask
-SERVER_URL = "http://192.168.100.8:5000"
-
-
-class TrianguloButton(Button):
-    """Botón con triángulo de alerta en el centro."""
-    def __init__(self, **kwargs):
-        super(TrianguloButton, self).__init__(**kwargs)
-        self.background_normal = ""
-        self.background_down = ""
-        self.background_color = (0, 0, 0, 0)
-        
-        with self.canvas.before:
-            Color(0.1, 0.4, 0.7, 1)
-            self.triangle = Triangle(points=[])
-            
-            Color(1, 1, 1, 1)
-            self.line = Line(points=[], width=dp(2))
-        
-        self.bind(pos=self.update_shape, size=self.update_shape)
-
-    def update_shape(self, *args):
-        x, y = self.pos
-        w, h = self.size
-        tamano_triangulo = min(w, h) * 0.9
-        centro_x = x + w / 2
-        centro_y = y + h / 2
-
-        p1 = (centro_x - tamano_triangulo / 2, centro_y - tamano_triangulo / 2)
-        p2 = (centro_x + tamano_triangulo / 2, centro_y - tamano_triangulo / 2)
-        p3 = (centro_x, centro_y + tamano_triangulo / 2)
-        
-        self.triangle.points = [p1[0], p1[1], p2[0], p2[1], p3[0], p3[1]]
-        self.line.points = [p1[0], p1[1], p2[0], p2[1], p3[0], p3[1], p1[0], p1[1]]
+from kivy.uix.popup import Popup
+from kivy.uix.label import Label
+from kivy.graphics import Color, RoundedRectangle, Rectangle, Triangle
+from kivy.metrics import dp, sp
+from websocket_manager import WebSocketManager
 
 
+# -------------------------
+# ✅ BOTÓN GENERAL CON FONDO
+# -------------------------
 class FullScreenButton(Button):
-    """Botón grande redondeado que ocupa todo el espacio disponible."""
     def __init__(self, **kwargs):
-        super(FullScreenButton, self).__init__(**kwargs)
-        self.background_normal = ""
-        self.background_down = ""
-        self.color = (1, 1, 1, 1)
-        self.bold = True
-        self.border_radius = dp(12)
-        self.background_color = kwargs.get("background_color", (0.2, 0.6, 1, 1))
-        
+        super().__init__(**kwargs)
+        self.background_color = (0, 0, 0, 0)
+        border_radius = kwargs.get("border_radius", [dp(25)])
+
         with self.canvas.before:
-            Color(*self.background_color)
-            self.rect = RoundedRectangle(pos=self.pos, size=self.size, radius=[self.border_radius])
-        
+            Color(*kwargs.get("background_color", (0.5, 0.5, 0.5, 1)))
+            self.rect = RoundedRectangle(pos=self.pos, size=self.size, radius=border_radius)
+
         self.bind(pos=self.update_rect, size=self.update_rect)
 
     def update_rect(self, *args):
@@ -67,103 +29,288 @@ class FullScreenButton(Button):
         self.rect.size = self.size
 
 
-class PantallaControles(Screen):
-    """Pantalla principal con los botones Azul, Rojo, Alerta y Finalizar."""
+# -------------------------
+# ✅ BOTÓN TRIÁNGULO DE ALERTA
+# -------------------------
+class TriangleAlertButton(Button):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.background_color = (0, 0, 0, 0)
+        self.text = ""
 
-    primary_color = (0.1, 0.4, 0.7, 1)
-    darker_primary_color = (0.05, 0.2, 0.4, 1)
-    secondary_color = (0.8, 0.1, 0.1, 1)
-    background_color = (0.95, 0.95, 0.95, 1)
+        with self.canvas.before:
+            Color(1, 0.8, 0, 1)
+            self.triangle = Triangle(points=[0, 0, 0, 0, 0, 0])
+
+            Color(0.9, 0.7, 0, 1)
+            self.triangle_border = Triangle(points=[0, 0, 0, 0, 0, 0])
+
+        with self.canvas.after:
+            Color(0, 0, 0, 1)
+            self.exclamation_rect = Rectangle(pos=(0, 0), size=(0, 0))
+            self.exclamation_dot = Rectangle(pos=(0, 0), size=(0, 0))
+
+        self.bind(pos=self.update_triangle, size=self.update_triangle)
+
+    def update_triangle(self, *args):
+        center_x = self.center_x
+        center_y = self.center_y
+        width = min(self.width, self.height) * 0.7
+        height = width * 0.866
+
+        border_offset = dp(3)
+        self.triangle_border.points = [
+            center_x, center_y + height/2 + border_offset,
+            center_x - width/2 - border_offset, center_y - height/2 - border_offset,
+            center_x + width/2 + border_offset, center_y - height/2 - border_offset
+        ]
+
+        self.triangle.points = [
+            center_x, center_y + height/2,
+            center_x - width/2, center_y - height/2,
+            center_x + width/2, center_y - height/2
+        ]
+
+        base_size = min(self.width, self.height)
+        exclamation_width = max(dp(6), base_size * 0.08)
+        exclamation_height = height * 0.45
+        dot_size = max(dp(8), base_size * 0.1)
+        spacing = max(dp(8), base_size * 0.08)
+
+        self.exclamation_rect.pos = (
+            center_x - exclamation_width/2,
+            center_y - exclamation_height/2 + spacing
+        )
+        self.exclamation_rect.size = (exclamation_width, exclamation_height)
+
+        self.exclamation_dot.pos = (
+            center_x - dot_size/2,
+            center_y - height/2 + spacing * 0.8
+        )
+        self.exclamation_dot.size = (dot_size, dot_size)
+
+
+# -------------------------
+# ✅ PANTALLA CONTROLES
+# -------------------------
+class PantallaControles(Screen):
 
     def __init__(self, **kwargs):
-        super(PantallaControles, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.name = "controles"
         self.build_ui()
-        
+
     def build_ui(self):
-        # Fondo
+
         with self.canvas.before:
-            Color(*self.background_color)
-            self.background_rect = Rectangle(size=self.size, pos=self.pos)
-        self.bind(size=self.update_background, pos=self.update_background)
-        
-        main_layout = BoxLayout(orientation="vertical", spacing=dp(12), padding=dp(12))
-        main_buttons_layout = BoxLayout(orientation='horizontal', size_hint_y=0.85, spacing=dp(12))
-        
-        # Botón Azul
-        plus_btn_azul = self.create_button(
-            text='[b]+[/b]', markup=True, font_size=sp(100),
-            background_color=self.primary_color, on_press=self.go_to_azul
+            Color(0.95, 0.95, 0.95, 1)
+            self.bg = Rectangle(size=self.size, pos=self.pos)
+
+        self.bind(size=self.update_bg, pos=self.update_bg)
+
+        main_layout = BoxLayout(
+            orientation="horizontal",
+            padding=dp(20),
+            spacing=dp(15)
         )
-        main_buttons_layout.add_widget(plus_btn_azul)
 
-        # Columna central con triángulo y botón de finalizar
-        center_column_layout = BoxLayout(orientation="vertical", size_hint=(0.35, 1), spacing=dp(8))
-
-        warning_container = RelativeLayout(size_hint_y=0.88)
-        btn_triangulo = TrianguloButton(size_hint=(1, 1))
-        btn_triangulo.bind(on_press=self.alerta_accion)
-        
-        exclamacion_label = Label(
-            text='!', font_size=sp(50), color=(1, 1, 1, 1),
-            size_hint=(None, None), size=(dp(40), dp(40)),
-            pos_hint={'center_x': 0.5, 'center_y': 0.5},
+        self.plus_btn_azul = FullScreenButton(
+            text="+",
+            font_size=sp(120),
+            background_color=(0.1, 0.4, 0.7, 1),
             bold=True
         )
+        self.plus_btn_azul.bind(on_press=self.go_to_azul)
 
-        warning_container.add_widget(btn_triangulo)
-        warning_container.add_widget(exclamacion_label)
+        self.plus_btn_rojo = FullScreenButton(
+            text="+",
+            font_size=sp(120),
+            background_color=(0.8, 0.1, 0.1, 1),
+            bold=True
+        )
+        self.plus_btn_rojo.bind(on_press=self.go_to_rojo)
 
-        btn_finalizar = FullScreenButton(
+        center = BoxLayout(
+            orientation="vertical",
+            size_hint=(0.35, 1),
+            spacing=dp(15)
+        )
+
+        self.btn_alerta = TriangleAlertButton()
+        self.btn_alerta.bind(on_press=self.alerta_accion)
+
+        self.btn_finalizar = FullScreenButton(
             text="FINALIZAR",
-            background_color=self.darker_primary_color,
-            font_size=sp(14),
-            size_hint_y=0.12
+            font_size=sp(15),
+            background_color=(0.05, 0.2, 0.4, 1),
+            bold=True,
+            size_hint=(1, 0.3)
         )
-        btn_finalizar.bind(on_press=self.finalizar_accion)
+        self.btn_finalizar.bind(on_press=self.mostrar_confirmacion)
 
-        center_column_layout.add_widget(warning_container)
-        center_column_layout.add_widget(btn_finalizar)
-        main_buttons_layout.add_widget(center_column_layout)
+        center.add_widget(self.btn_alerta)
+        center.add_widget(self.btn_finalizar)
 
-        # Botón Rojo
-        plus_btn_rojo = self.create_button(
-            text='[b]+[/b]', markup=True, font_size=sp(100),
-            background_color=self.secondary_color, on_press=self.go_to_rojo
-        )
-        main_buttons_layout.add_widget(plus_btn_rojo)
+        main_layout.add_widget(self.plus_btn_azul)
+        main_layout.add_widget(center)
+        main_layout.add_widget(self.plus_btn_rojo)
 
-        main_layout.add_widget(main_buttons_layout)
         self.add_widget(main_layout)
+        self.bloquear_botones()
 
-    def create_button(self, text, markup=False, font_size=sp(32), background_color=(0, 0, 0, 1), on_press=None):
-        btn = FullScreenButton(
-            text=text, background_color=background_color, font_size=font_size, markup=markup
-        )
-        if on_press:
-            btn.bind(on_press=on_press)
-        return btn
+    # -------------------------
+    # ✅ FONDO RESPONSIVO
+    # -------------------------
+    def update_bg(self, *args):
+        self.bg.size = self.size
+        self.bg.pos = self.pos
 
-    def update_background(self, *args):
-        self.background_rect.size = self.size
-        self.background_rect.pos = self.pos
+    # -------------------------
+    # ✅ BLOQUEOS
+    # -------------------------
+    def bloquear_botones(self):
+        """Bloquea los botones de suma"""
+        self.plus_btn_azul.disabled = True
+        self.plus_btn_rojo.disabled = True
+        self.plus_btn_azul.opacity = 0.35
+        self.plus_btn_rojo.opacity = 0.35
+        print("🔒 Botones de suma BLOQUEADOS")
 
-    def finalizar_accion(self, instance):
-        print("Botón FINALIZAR presionado. Volviendo al login.")
-        self.manager.current = "pantalla_login"
+    def habilitar_botones(self):
+        """Habilita los botones de suma (llamado desde WebSocket)"""
+        self.plus_btn_azul.disabled = False
+        self.plus_btn_rojo.disabled = False
+        self.plus_btn_azul.opacity = 1
+        self.plus_btn_rojo.opacity = 1
+        print("🔓 Botones de suma HABILITADOS")
 
+    def reset_ui(self):
+        """Reset completo de la UI (llamado desde WebSocket)"""
+        self.bloquear_botones()
+        print("🔄 UI reseteada")
+
+    # -------------------------
+    # ✅ ACCIONES
+    # -------------------------
     def alerta_accion(self, instance):
-        print("Botón de ALERTA presionado.")
-        try:
-            url = f"{SERVER_URL}/alerta"
-            requests.post(url, json={"mensaje": "Alerta activada"})
-        except Exception as e:
-            print("Error al enviar alerta:", e)
+        """Envía incidencia al servidor"""
+        print("⚠️ Marcando incidencia...")
+        WebSocketManager().enviar_incidencia()
+        
+        # Mostrar feedback visual temporal
+        original_color = self.btn_alerta.canvas.before.children[0].rgba
+        with self.btn_alerta.canvas.before:
+            self.btn_alerta.canvas.before.children[0].rgba = (1, 0.5, 0, 1)  # Naranja más fuerte
+        
+        from kivy.clock import Clock
+        Clock.schedule_once(
+            lambda dt: setattr(self.btn_alerta.canvas.before.children[0], 'rgba', original_color),
+            0.5
+        )
+
+    # ✅ POPUP DE CONFIRMACIÓN
+    def mostrar_confirmacion(self, instance):
+        content = BoxLayout(orientation='vertical', spacing=dp(15), padding=dp(20))
+
+        lbl_mensaje = Label(
+            text="¿Seguro que deseas finalizar el combate?",
+            color=(0.2, 0.6, 1, 1),
+            font_size=sp(20),
+            halign='center',
+            valign='middle',
+            size_hint_y=None,
+            height=dp(80)
+        )
+        content.add_widget(lbl_mensaje)
+
+        botones = BoxLayout(spacing=dp(20), size_hint_y=None, height=dp(50))
+
+        btn_si = Button(
+            text='SÍ',
+            background_normal='',
+            background_color=(0.2, 0.6, 1, 1),
+            color=(1, 1, 1, 1),
+            bold=True,
+            font_size=sp(18)
+        )
+
+        btn_no = Button(
+            text='NO',
+            background_normal='',
+            background_color=(0.7, 0.1, 0.1, 1),
+            color=(1, 1, 1, 1),
+            bold=True,
+            font_size=sp(18)
+        )
+
+        botones.add_widget(btn_si)
+        botones.add_widget(btn_no)
+
+        content.add_widget(botones)
+
+        popup = Popup(
+            title="Confirmación",
+            title_color=(0.2, 0.6, 1, 1),
+            title_size=sp(22),
+            title_align='center',
+            content=content,
+            size_hint=(None, None),
+            size=(dp(500), dp(260)),
+            separator_height=0,
+            background='',
+            auto_dismiss=False
+        )
+
+        # ✅ FONDO REDONDEADO IGUAL A TU LOGIN
+        with popup.canvas.before:
+            Color(0.52, 0.76, 0.75, 0.8)
+            popup.rect = RoundedRectangle(
+                pos=popup.pos,
+                size=popup.size,
+                radius=[dp(10)]
+            )
+
+        def update_popup_rect(instance, value):
+            instance.rect.pos = instance.pos
+            instance.rect.size = instance.size
+
+        popup.bind(pos=update_popup_rect, size=update_popup_rect)
+
+        btn_no.bind(on_press=popup.dismiss)
+        btn_si.bind(on_press=lambda x: self.confirmar_finalizar(popup))
+
+        popup.open()
+
+    # ✅ CONFIRMAR FINALIZAR
+    def confirmar_finalizar(self, popup):
+        popup.dismiss()
+        
+        # Limpiar estado del juez antes de desconectar
+        ws = WebSocketManager()
+        if ws.juez_id:
+            ws.jueces_ocupados.discard(ws.juez_id)
+            ws.juez_id = None
+        
+        ws.disconnect()
+        self.manager.current = "pantalla_login"
+        print("👋 Finalizando combate y volviendo al login")
 
     def go_to_azul(self, instance):
-        print("Botón AZUL presionado. Navegando a Pantalla Azul.")
-        self.manager.current = "pantalla_azul"
+        """Ir a pantalla de puntuación azul"""
+        if not self.plus_btn_azul.disabled:
+            self.bloquear_botones()
+            self.manager.current = "pantalla_azul"
+            print("🔵 Navegando a pantalla AZUL")
 
     def go_to_rojo(self, instance):
-        print("Botón ROJO presionado. Navegando a Pantalla Roja.")
-        self.manager.current = "pantalla_roja"
+        """Ir a pantalla de puntuación roja"""
+        if not self.plus_btn_rojo.disabled:
+            self.bloquear_botones()
+            self.manager.current = "pantalla_roja"
+            print("🔴 Navegando a pantalla ROJA")
+
+    def on_enter(self):
+        """Se ejecuta al entrar a la pantalla"""
+        # Asegurarse de que los botones están bloqueados al inicio
+        self.bloquear_botones()
+        print("📱 Entrando a pantalla de controles")
