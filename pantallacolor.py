@@ -8,8 +8,8 @@ from kivy.uix.widget import Widget
 
 from websocket_manager import WebSocketManager
 
+
 AZULES = [
-    (0.85, 0.92, 1.00, 1),  # 0
     (0.55, 0.75, 0.95, 1),  # 1
     (0.35, 0.60, 0.85, 1),  # 2
     (0.20, 0.45, 0.75, 1),  # 3
@@ -18,7 +18,6 @@ AZULES = [
 ]
 
 ROJOS = [
-    (1.00, 0.85, 0.85, 1),  # 0
     (1.00, 0.70, 0.70, 1),  # 1
     (0.95, 0.45, 0.45, 1),  # 2
     (0.85, 0.25, 0.25, 1),  # 3
@@ -35,7 +34,7 @@ class BotonPuntaje(Button):
         self.puntos = puntos
         self.pantalla = pantalla
 
-        self.text = str(puntos)
+        self.text = "NULL" if puntos is None else str(puntos)
         self.font_size = sp(28)
         self.bold = True
         self.size_hint = (None, None)
@@ -83,8 +82,9 @@ class PantallaColor(Screen):
             self.bg_rect = Rectangle(size=Window.size, pos=self.pos)
 
         self.bind(size=self.update_bg, pos=self.update_bg)
-        main_layout.add_widget(Widget(size_hint_y=0.35))
+        main_layout.add_widget(Widget(size_hint_y=0.25))
 
+        # === FILA DE NÚMEROS (1 A 5) ===
         layout_botones = BoxLayout(
             orientation="horizontal",
             spacing=dp(20),
@@ -94,18 +94,41 @@ class PantallaColor(Screen):
         )
 
         colores = AZULES if self.color_asignado == "AZUL" else ROJOS
-        for i in range(6):
+
+        for i in range(1, 6):  # ✅ SOLO 1 A 5
             btn = BotonPuntaje(
                 color_combate=self.color_asignado,
                 puntos=i,
-                color_fondo=colores[i],
+                color_fondo=colores[i - 1],
                 pantalla=self
             )
             layout_botones.add_widget(btn)
-        layout_botones.width = (dp(90) * 6) + (dp(20) * 5)
+
+        layout_botones.width = (dp(90) * 5) + (dp(20) * 4)
 
         main_layout.add_widget(layout_botones)
-        main_layout.add_widget(Widget(size_hint_y=0.35))
+
+        # === BOTÓN NULL ABAJO ===
+        color_null = (0, 0.4, 0.8, 1) if self.color_asignado == "AZUL" else (0.7, 0, 0, 1)
+
+        btn_null = BotonPuntaje(
+            color_combate=self.color_asignado,
+            puntos=None,
+            color_fondo=color_null,  # ✅ COLOR MÁS FUERTE
+            pantalla=self
+        )
+
+        layout_null = BoxLayout(
+            size_hint=(1, None),
+            height=dp(110)
+        )
+
+        layout_null.add_widget(Widget())
+        layout_null.add_widget(btn_null)
+        layout_null.add_widget(Widget())
+
+        main_layout.add_widget(layout_null)
+        main_layout.add_widget(Widget(size_hint_y=0.25))
 
         self.add_widget(main_layout)
 
