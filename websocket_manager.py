@@ -4,7 +4,7 @@ from kivy.logger import Logger
 from kivy.clock import Clock
 from kivy.app import App
 
-SERVER_IP = "192.168.100.8"
+SERVER_IP = "10.100.76.104"
 SERVER_PORT = "8080"
 WS_ENDPOINT = "/ws/juez"
 LOGIN_API_ENDPOINT = "/api/auth/juez/login"
