@@ -10,8 +10,6 @@ from kivy.core.window import Window
 from kivy.uix.widget import Widget
 from websocket_manager import WebSocketManager
 
-
-# ✅ BOTÓN ESTILO LOGIN
 class HoverButton(Button):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -34,8 +32,6 @@ class HoverButton(Button):
         self.rect.pos = self.pos
         self.rect.size = self.size
 
-
-# ✅ PANTALLA SELECCIÓN DE JUEZ
 class SeleccJuez(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -45,7 +41,6 @@ class SeleccJuez(Screen):
 
     def build_ui(self):
 
-        # ✅ Fondo gris
         with self.canvas.before:
             Color(0.95, 0.95, 0.95, 1)
             self.bg = Rectangle(size=Window.size, pos=self.pos)
@@ -56,7 +51,6 @@ class SeleccJuez(Screen):
 
         main_layout.add_widget(Widget(size_hint_y=0.08))
 
-        # ✅ LOGO
         logo = Image(
             source="Imagen5-Photoroom.png",
             size_hint=(None, None),
@@ -85,7 +79,6 @@ class SeleccJuez(Screen):
         )
         content.add_widget(titulo)
 
-        # ✅ MENSAJE DE ERROR/ESTADO
         self.mensaje_error = Label(
             text="",
             markup=True,
@@ -96,7 +89,6 @@ class SeleccJuez(Screen):
         )
         content.add_widget(self.mensaje_error)
 
-        # ✅ BOTONES DE JUECES
         self.botones = {}
 
         for i in range(1, 4):
@@ -109,15 +101,12 @@ class SeleccJuez(Screen):
         main_layout.add_widget(Widget(size_hint_y=0.1))
         self.add_widget(main_layout)
 
-        # ✅ ACTUALIZA ESTADO DESDE SERVIDOR CADA 0.3s
         Clock.schedule_interval(self.actualizar_estado, 0.3)
 
-    # ✅ ACTUALIZAR FONDO
     def update_bg(self, *args):
         self.bg.size = self.size
         self.bg.pos = self.pos
 
-    # ✅ BLOQUEO USANDO EL WEBSOCKET (NO VARIABLES LOCALES)
     def actualizar_estado(self, *args):
 
         ws = WebSocketManager()
@@ -128,7 +117,6 @@ class SeleccJuez(Screen):
                 btn.disabled = True
                 btn.text = f"JUEZ {i} (OCUPADO)"
                 btn.opacity = 0.35
-                # Color gris para ocupado
                 with btn.canvas.before:
                     Color(0.5, 0.5, 0.5, 1)
                     btn.rect.size = btn.size
@@ -136,55 +124,42 @@ class SeleccJuez(Screen):
                 btn.disabled = False
                 btn.text = f"JUEZ {i}"
                 btn.opacity = 1
-                # Color azul para disponible
                 with btn.canvas.before:
                     Color(0.2, 0.6, 1, 1)
                     btn.rect.size = btn.size
 
-    # ✅ SELECCIONAR JUEZ
     def seleccionar_juez(self, numero):
 
         ws = WebSocketManager()
 
-        # ✅ VERIFICAR SI YA ESTÁ OCUPADO
         if numero in ws.jueces_ocupados:
-            self.mensaje_error.text = "[b]⚠️ Este juez ya está ocupado[/b]"
+            self.mensaje_error.text = "[b]Este juez ya está ocupado[/b]"
             Clock.schedule_once(lambda dt: setattr(self.mensaje_error, 'text', ''), 3)
             return
 
-        # ✅ ENVIAR SELECCIÓN AL SERVIDOR
         ws.enviar_juez_seleccionado(numero)
 
-        # ✅ GUARDAR JUEZ TEMPORALMENTE (se confirmará con respuesta del servidor)
         ws.juez_id = numero
         ws.jueces_ocupados.add(numero)
 
-        print(f"✅ Juez seleccionado: {numero}")
-
-        # ✅ ACTUALIZA EN PANTALLA
         self.actualizar_estado()
 
-        # ✅ IR A CONTROLES DESPUÉS DE 0.2s
+     
         Clock.schedule_once(lambda dt: setattr(self.manager, 'current', 'controles'), 0.2)
 
-    # ✅ MOSTRAR ERROR SI EL JUEZ YA ESTABA OCUPADO
     def mostrar_error_ocupado(self):
         ws = WebSocketManager()
         
-        # Resetear selección fallida
         if ws.juez_id in ws.jueces_ocupados:
             ws.jueces_ocupados.discard(ws.juez_id)
         ws.juez_id = None
         
-        self.mensaje_error.text = "[b]❌ Este juez fue seleccionado por otro teléfono[/b]"
+        self.mensaje_error.text = "[b]Este juez fue seleccionado por otro teléfono[/b]"
         Clock.schedule_once(lambda dt: setattr(self.mensaje_error, 'text', ''), 3)
         self.actualizar_estado()
 
     def on_enter(self):
-        """Se ejecuta al entrar a la pantalla"""
-        # Limpiar mensaje de error
         if self.mensaje_error:
             self.mensaje_error.text = ""
         
-        # Actualizar estado inmediatamente
         self.actualizar_estado()

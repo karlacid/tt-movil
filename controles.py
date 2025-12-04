@@ -155,35 +155,28 @@ class PantallaControles(Screen):
         self.bg.pos = self.pos
 
     def bloquear_botones(self):
-        """Bloquea los botones de suma"""
         self.plus_btn_azul.disabled = True
         self.plus_btn_rojo.disabled = True
         self.plus_btn_azul.opacity = 0.35
         self.plus_btn_rojo.opacity = 0.35
-        print("🔒 Botones de suma BLOQUEADOS")
+        print("Botones de suma BLOQUEADOS")
 
     def habilitar_botones(self):
-        """Habilita los botones de suma (llamado desde WebSocket)"""
         self.plus_btn_azul.disabled = False
         self.plus_btn_rojo.disabled = False
         self.plus_btn_azul.opacity = 1
         self.plus_btn_rojo.opacity = 1
-        print("🔓 Botones de suma HABILITADOS")
 
     def reset_ui(self):
-        """Reset completo de la UI (llamado desde WebSocket)"""
         self.bloquear_botones()
-        print("🔄 UI reseteada")
 
     def alerta_accion(self, instance):
-        """Envía incidencia al servidor"""
-        print("⚠️ Marcando incidencia...")
+        print("Marcando incidencia...")
         WebSocketManager().enviar_incidencia()
         
-        # Mostrar feedback visual temporal
         original_color = self.btn_alerta.canvas.before.children[0].rgba
         with self.btn_alerta.canvas.before:
-            self.btn_alerta.canvas.before.children[0].rgba = (1, 0.5, 0, 1)  # Naranja más fuerte
+            self.btn_alerta.canvas.before.children[0].rgba = (1, 0.5, 0, 1)
         
         from kivy.clock import Clock
         Clock.schedule_once(
@@ -191,7 +184,6 @@ class PantallaControles(Screen):
             0.5
         )
 
-    # ✅ POPUP DE CONFIRMACIÓN
     def mostrar_confirmacion(self, instance):
         content = BoxLayout(orientation='vertical', spacing=dp(15), padding=dp(20))
 
@@ -244,7 +236,6 @@ class PantallaControles(Screen):
             auto_dismiss=False
         )
 
-        # ✅ FONDO REDONDEADO IGUAL A TU LOGIN
         with popup.canvas.before:
             Color(0.52, 0.76, 0.75, 0.8)
             popup.rect = RoundedRectangle(
@@ -264,11 +255,9 @@ class PantallaControles(Screen):
 
         popup.open()
 
-    # ✅ CONFIRMAR FINALIZAR
     def confirmar_finalizar(self, popup):
         popup.dismiss()
         
-        # Limpiar estado del juez antes de desconectar
         ws = WebSocketManager()
         if ws.juez_id:
             ws.jueces_ocupados.discard(ws.juez_id)
@@ -276,24 +265,17 @@ class PantallaControles(Screen):
         
         ws.disconnect()
         self.manager.current = "pantalla_login"
-        print("👋 Finalizando combate y volviendo al login")
 
     def go_to_azul(self, instance):
-        """Ir a pantalla de puntuación azul"""
         if not self.plus_btn_azul.disabled:
             self.bloquear_botones()
             self.manager.current = "pantalla_azul"
-            print("🔵 Navegando a pantalla AZUL")
 
     def go_to_rojo(self, instance):
-        """Ir a pantalla de puntuación roja"""
         if not self.plus_btn_rojo.disabled:
             self.bloquear_botones()
             self.manager.current = "pantalla_roja"
-            print("🔴 Navegando a pantalla ROJA")
 
     def on_enter(self):
-        """Se ejecuta al entrar a la pantalla"""
-        # Asegurarse de que los botones están bloqueados al inicio
         self.bloquear_botones()
-        print("📱 Entrando a pantalla de controles")
+        

@@ -11,7 +11,7 @@ from kivy.uix.widget import Widget
 from logintel import PantallaLogin
 from controles import PantallaControles
 from pantallacolor import PantallaColor
-from selecjuez import SeleccJuez  # ⬅️ NUEVA IMPORTACIÓN
+from selecjuez import SeleccJuez
 from websocket_manager import WebSocketManager
 
 
@@ -72,7 +72,7 @@ class PetoTechApp(App):
         sm = ScreenManager()
         sm.add_widget(PantallaBienvenida(name="pantalla_bienvenida"))
         sm.add_widget(PantallaLogin(name="pantalla_login"))
-        sm.add_widget(SeleccJuez(name="selecjuez"))  # ⬅️ AÑADIDA
+        sm.add_widget(SeleccJuez(name="selecjuez"))
         sm.add_widget(PantallaControles(name="controles"))
         
         sm.add_widget(PantallaColor(
@@ -88,7 +88,6 @@ class PetoTechApp(App):
         return sm
 
     def on_stop(self):
-        print("Aplicación cerrándose. Desconectando WebSocket...")
         WebSocketManager().disconnect()
 
 if __name__ == "__main__":

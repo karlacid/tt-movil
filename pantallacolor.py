@@ -8,8 +8,6 @@ from kivy.uix.widget import Widget
 
 from websocket_manager import WebSocketManager
 
-
-# ✅ Escala AZUL de claro → oscuro (0 → 5)
 AZULES = [
     (0.85, 0.92, 1.00, 1),  # 0
     (0.55, 0.75, 0.95, 1),  # 1
@@ -19,7 +17,6 @@ AZULES = [
     (0.05, 0.15, 0.35, 1),  # 5
 ]
 
-# ✅ Escala ROJA de claro → oscuro (0 → 5)
 ROJOS = [
     (1.00, 0.85, 0.85, 1),  # 0
     (1.00, 0.70, 0.70, 1),  # 1
@@ -63,10 +60,7 @@ class BotonPuntaje(Button):
         self.rect.size = self.size
 
     def enviar_puntaje(self, instance):
-        print(f"✅ Enviando {self.puntos} puntos para {self.color_combate}")
         WebSocketManager().enviar_punto(self.color_combate, self.puntos)
-
-        # ✅ REGRESO AUTOMÁTICO A CONTROLES
         self.pantalla.manager.current = "controles"
 
 
@@ -84,17 +78,13 @@ class PantallaColor(Screen):
             size_hint=(1, 1)
         )
 
-        # ✅ Fondo gris claro uniforme
         with main_layout.canvas.before:
             Color(0.95, 0.95, 0.95, 1)
             self.bg_rect = Rectangle(size=Window.size, pos=self.pos)
 
         self.bind(size=self.update_bg, pos=self.update_bg)
-
-        # ✅ Espaciador superior
         main_layout.add_widget(Widget(size_hint_y=0.35))
 
-        # ✅ Fila de botones centrada
         layout_botones = BoxLayout(
             orientation="horizontal",
             spacing=dp(20),
@@ -104,8 +94,6 @@ class PantallaColor(Screen):
         )
 
         colores = AZULES if self.color_asignado == "AZUL" else ROJOS
-
-        # ✅ BOTONES DEL 0 AL 5
         for i in range(6):
             btn = BotonPuntaje(
                 color_combate=self.color_asignado,
@@ -114,13 +102,9 @@ class PantallaColor(Screen):
                 pantalla=self
             )
             layout_botones.add_widget(btn)
-
-        # ✅ Ajuste exacto del ancho (6 botones)
         layout_botones.width = (dp(90) * 6) + (dp(20) * 5)
 
         main_layout.add_widget(layout_botones)
-
-        # ✅ Espaciador inferior
         main_layout.add_widget(Widget(size_hint_y=0.35))
 
         self.add_widget(main_layout)

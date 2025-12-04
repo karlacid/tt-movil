@@ -1,7 +1,7 @@
 import json
 import requests
 from kivy.app import App
-from kivy.lang import Builder # Puede que no se use directamente, pero no estorba si lo tienes
+from kivy.lang import Builder
 from kivy.uix.screenmanager import Screen, ScreenManager
 from kivy.logger import Logger
 from kivy.uix.popup import Popup
@@ -15,19 +15,11 @@ from kivy.core.window import Window
 from kivy.clock import Clock
 from kivy.metrics import dp, sp
 from kivy.uix.widget import Widget
-
-# Importar el gestor de WebSocket y las nuevas constantes de endpoint de login
 from websocket_manager import WebSocketManager, SERVER_IP, SERVER_PORT, WS_ENDPOINT, LOGIN_API_ENDPOINT
 
-# Usamos las constantes definidas en websocket_manager.py
 BASE_SERVER_URL = f"http://{SERVER_IP}:{SERVER_PORT}"
 
-
-# --- Clases personalizadas de UI (RoundedTextInput, HoverButton) ---
-# ... (Sin cambios, se omite el cuerpo de las clases para brevedad) ...
-
 class RoundedTextInput(TextInput):
-    """Campo de texto con esquinas redondeadas y diseño moderno."""
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.background_normal = ""
@@ -54,7 +46,6 @@ class RoundedTextInput(TextInput):
         self.bg_rect.size = self.size
 
 class HoverButton(Button):
-    """Botón con color personalizado y bordes redondeados."""
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.background_normal = ""
@@ -76,16 +67,10 @@ class HoverButton(Button):
     def update_rect(self, *args):
         self.rect.pos = self.pos
         self.rect.size = self.size
-
-
-# --- FIN CLASES PERSONALIZADAS ---
-
-
 class PantallaLogin(Screen):
-    """Pantalla de inicio de sesión conectada al servidor Spring Boot."""
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.name = "pantalla_login" # Asegúrate de que este nombre sea consistente
+        self.name = "pantalla_login"
         self.build_ui()
 
     def build_ui(self):
@@ -109,7 +94,7 @@ class PantallaLogin(Screen):
         center_layout.add_widget(Widget(size_hint_y=None, height=dp(8)))
         botones_layout = BoxLayout(orientation="horizontal", spacing=dp(12), size_hint_y=None, height=dp(45))
         btn_aceptar = HoverButton(text="ACEPTAR", size_hint=(0.5, 1))
-        btn_aceptar.bind(on_press=self.iniciar_sesion) # <-- Llama a iniciar_sesion
+        btn_aceptar.bind(on_press=self.iniciar_sesion)
         botones_layout.add_widget(btn_aceptar)
         btn_volver = HoverButton(text="VOLVER", background_color=(0.2, 0.6, 1, 1), size_hint=(0.5, 1))
         btn_volver.bind(on_press=self.volver)
@@ -127,7 +112,6 @@ class PantallaLogin(Screen):
         self.background_rect.pos = self.pos
 
     def on_enter(self, *args):
-        # Establecer foco al entrar a la pantalla
         Clock.schedule_once(self.establecer_foco, 0.1)
 
     def establecer_foco(self, dt):
@@ -138,19 +122,14 @@ class PantallaLogin(Screen):
         if not contrasena:
             self.mostrar_mensaje("Error", "Por favor ingresa una contraseña.")
             return
-
-        # Usar Clock.schedule_once para ejecutar la petición HTTP en un hilo secundario
-        # y no bloquear la interfaz de usuario.
         Clock.schedule_once(
             lambda dt: self._perform_login_request(contrasena), 0
         )
     
     def _perform_login_request(self, contrasena):
-        """Método para ejecutar la petición de login HTTP en segundo plano."""
         login_url = f"{BASE_SERVER_URL}{LOGIN_API_ENDPOINT}"
         Logger.info(f"Kivy: Intentando login HTTP a {login_url}")
-
-        payload = json.dumps({"password": contrasena}) # Asegúrate de que el servidor espera 'password'
+        payload = json.dumps({"password": contrasena}) 
         headers = {'Content-Type': 'application/json'}
 
         try:
@@ -159,13 +138,9 @@ class PantallaLogin(Screen):
 
             if response.status_code == 200 and response_data.get("status") == "ok":
                 Logger.info("Kivy: Login HTTP exitoso. Iniciando conexión WebSocket...")
-                # 2. ✅ SI EL LOGIN HTTP ES CORRECTO, CONECTAR WEBSOCKET
                 ws_manager = WebSocketManager()
-                ws_manager.connect() # Esto iniciará la conexión WebSocket en un hilo
-
-                # Navegar a la siguiente pantalla DESPUÉS de un login HTTP exitoso
-                # Esto debe ejecutarse en el hilo principal de Kivy
-                Clock.schedule_once(lambda dt: self._navigate_to_selecjuez(), 0) # ⬅️ CAMBIADO a _navigate_to_selecjuez
+                ws_manager.connect() 
+                Clock.schedule_once(lambda dt: self._navigate_to_selecjuez(), 0)
 
             else:
                 error_message = response_data.get("message", "Credenciales incorrectas o error desconocido")
@@ -186,11 +161,7 @@ class PantallaLogin(Screen):
             self.mostrar_mensaje("Error Inesperado", f"Ocurrió un error inesperado.\nDetalle: {e}")
 
     def _navigate_to_selecjuez(self):
-        """Navega a la pantalla de selección de juez en el hilo principal de Kivy."""
-        self.manager.current = "selecjuez" # ⬅️ NAVEGA A SELECCIÓN DE JUEZ
-
-    # ... (El resto de las funciones: mostrar_mensaje, _update_popup_rect, volver, etc. NO CAMBIAN) ...
-
+        self.manager.current = "selecjuez" 
     def mostrar_mensaje(self, titulo, mensaje):
         content = BoxLayout(orientation="vertical", spacing=dp(10), padding=dp(12))
         lbl_mensaje = Label(text=mensaje, color=(0.2, 0.6, 1, 1), font_size=sp(14), halign="center", valign="middle", size_hint_y=None, height=dp(55))
@@ -211,9 +182,4 @@ class PantallaLogin(Screen):
         instance.rect.size = instance.size
 
     def volver(self, instance):
-        # Asumiendo que "pantalla_bienvenida" es una pantalla existente en tu ScreenManager
-        # Si no existe, esto causará un error. Asegúrate de añadirla si la necesitas.
         self.manager.current = "pantalla_bienvenida"
-
-
-# -

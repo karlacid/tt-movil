@@ -14,7 +14,7 @@ class WebSocketManager:
     _instance = None
 
     juez_id = None
-    jueces_ocupados = set()   # ✅ SINCRONIZADO EN TODOS
+    jueces_ocupados = set() 
 
     def __new__(cls):
         if cls._instance is None:
@@ -24,7 +24,6 @@ class WebSocketManager:
             cls._instance.ws_thread = None
         return cls._instance
 
-    # ---------------- CONEXIÓN ----------------
 
     def connect(self):
         if self.is_connected:
@@ -49,7 +48,6 @@ class WebSocketManager:
         if self.ws and self.is_connected:
             self.ws.close()
 
-    # ---------------- ENVÍOS ----------------
 
     def _send_message(self, message):
         if self.ws and self.is_connected:
@@ -63,62 +61,49 @@ class WebSocketManager:
     def enviar_incidencia(self):
         self._send_message("INCIDENCIA")
 
-    # ✅✅✅ ENVÍA JUEZ SELECCIONADO AL SERVIDOR
     def enviar_juez_seleccionado(self, juez):
         self._send_message(f"SELECCIONAR_JUEZ:{juez}")
-        Logger.info(f"🎯 Solicitando Juez {juez}")
-
-    # ---------------- EVENTOS ----------------
+        Logger.info(f"Solicitando Juez {juez}")
 
     def _on_open(self, ws):
-        Logger.info("✅ WS CONECTADO")
+        Logger.info("WS CONECTADO")
         self.is_connected = True
 
     def _on_message(self, ws, message):
-        Logger.info(f"📩 WS Recibido: {message}")
+        Logger.info(f"WS Recibido: {message}")
         mensaje = message.strip()
 
-        # ✅ ESTADO INICIAL DE JUECES OCUPADOS
         if mensaje.startswith("ESTADO_JUECES:"):
-            # Formato: "ESTADO_JUECES:[1, 3]"
             estado = mensaje.replace("ESTADO_JUECES:", "").strip()
-            
-            # Parsear el conjunto
+     
             if estado and estado != "[]":
-                # Quitar corchetes y parsear números
                 numeros = estado.strip("[]").split(",")
                 self.jueces_ocupados = {int(n.strip()) for n in numeros if n.strip().isdigit()}
             else:
                 self.jueces_ocupados = set()
             
-            Logger.info(f"📋 Jueces ocupados actualizados: {self.jueces_ocupados}")
+            Logger.info(f"Jueces ocupados actualizados: {self.jueces_ocupados}")
             Clock.schedule_once(lambda dt: self._refrescar_seleccion())
-
-        # ✅ JUEZ YA OCUPADO (Respuesta negativa)
         elif mensaje == "JUEZ_OCUPADO":
-            Logger.warning("⚠️ El juez seleccionado ya está ocupado")
+            Logger.warning("El juez seleccionado ya está ocupado")
             Clock.schedule_once(lambda dt: self._mostrar_error_ocupado())
 
-        # ✅ HABILITAR BOTONES DESPUÉS DE INCIDENCIA (2+ jueces)
         elif mensaje == "HABILITAR_PUNTOS":
-            Logger.info("🔓 Habilitando botones de puntos")
+            Logger.info("Habilitando botones de puntos")
             Clock.schedule_once(self._activar_botones, 0)
 
-        # ✅ RESET COMPLETO
         elif mensaje == "RESET_COMPLETO":
-            Logger.info("🔄 Reset recibido del servidor")
+            Logger.info("Reset recibido del servidor")
             Clock.schedule_once(self._manejar_reset, 0)
-
-    # ---------------- SINCRONIZACIÓN UI ----------------
 
     def _refrescar_seleccion(self):
         try:
             app = App.get_running_app()
             pantalla = app.root.get_screen("selecjuez")
             pantalla.actualizar_estado()
-            Logger.info("✅ UI jueces actualizada")
+            Logger.info("UI jueces actualizada")
         except Exception as e:
-            Logger.error(f"❌ Error refrescando jueces: {e}")
+            Logger.error(f"Error refrescando jueces: {e}")
 
     def _mostrar_error_ocupado(self):
         try:
@@ -126,7 +111,7 @@ class WebSocketManager:
             pantalla = app.root.get_screen("selecjuez")
             pantalla.mostrar_error_ocupado()
         except Exception as e:
-            Logger.error(f"❌ Error mostrando mensaje: {e}")
+            Logger.error(f"Error mostrando mensaje: {e}")
 
     def _activar_botones(self, dt):
         try:
@@ -134,7 +119,7 @@ class WebSocketManager:
             pantalla = app.root.get_screen("controles")
             pantalla.habilitar_botones()
         except Exception as e:
-            Logger.error(f"❌ Error activando botones: {e}")
+            Logger.error(f"Error activando botones: {e}")
 
     def _manejar_reset(self, dt):
         try:
@@ -143,13 +128,13 @@ class WebSocketManager:
                 pantalla = app.root.get_screen("controles")
                 pantalla.reset_ui()
         except Exception as e:
-            Logger.error(f"❌ Error en reset: {e}")
+            Logger.error(f"Error en reset: {e}")
 
     def _on_error(self, ws, error):
         Logger.error(f"WS Error: {error}")
 
     def _on_close(self, ws, code, msg):
-        Logger.info("❌ WS DESCONECTADO")
+        Logger.info("WS DESCONECTADO")
         self.is_connected = False
         self.ws = None
         self.ws_thread = None
