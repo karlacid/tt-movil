@@ -9,9 +9,6 @@ from kivy.metrics import dp, sp
 from websocket_manager import WebSocketManager
 
 
-# -------------------------
-# ✅ BOTÓN GENERAL CON FONDO
-# -------------------------
 class FullScreenButton(Button):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -29,9 +26,6 @@ class FullScreenButton(Button):
         self.rect.size = self.size
 
 
-# -------------------------
-# ✅ BOTÓN TRIÁNGULO DE ALERTA
-# -------------------------
 class TriangleAlertButton(Button):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -90,9 +84,6 @@ class TriangleAlertButton(Button):
         self.exclamation_dot.size = (dot_size, dot_size)
 
 
-# -------------------------
-# ✅ PANTALLA CONTROLES
-# -------------------------
 class PantallaControles(Screen):
 
     def __init__(self, **kwargs):
@@ -158,16 +149,11 @@ class PantallaControles(Screen):
         self.add_widget(main_layout)
         self.bloquear_botones()
 
-    # -------------------------
-    # ✅ FONDO RESPONSIVO
-    # -------------------------
+
     def update_bg(self, *args):
         self.bg.size = self.size
         self.bg.pos = self.pos
 
-    # -------------------------
-    # ✅ BLOQUEOS
-    # -------------------------
     def bloquear_botones(self):
         """Bloquea los botones de suma"""
         self.plus_btn_azul.disabled = True
@@ -189,9 +175,6 @@ class PantallaControles(Screen):
         self.bloquear_botones()
         print("🔄 UI reseteada")
 
-    # -------------------------
-    # ✅ ACCIONES
-    # -------------------------
     def alerta_accion(self, instance):
         """Envía incidencia al servidor"""
         print("⚠️ Marcando incidencia...")
