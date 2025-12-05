@@ -108,11 +108,9 @@ class SeleccJuez(Screen):
         self.bg.pos = self.pos
 
     def actualizar_estado(self, *args):
-
         ws = WebSocketManager()
 
         for i, btn in self.botones.items():
-
             if i in ws.jueces_ocupados:
                 btn.disabled = True
                 btn.text = f"JUEZ {i} (OCUPADO)"
@@ -129,7 +127,6 @@ class SeleccJuez(Screen):
                     btn.rect.size = btn.size
 
     def seleccionar_juez(self, numero):
-
         ws = WebSocketManager()
 
         if numero in ws.jueces_ocupados:
@@ -137,24 +134,43 @@ class SeleccJuez(Screen):
             Clock.schedule_once(lambda dt: setattr(self.mensaje_error, 'text', ''), 3)
             return
 
+        # Enviar selección al servidor
         ws.enviar_juez_seleccionado(numero)
-
+        
+        # Actualizar estado local temporalmente
         ws.juez_id = numero
         ws.jueces_ocupados.add(numero)
-
         self.actualizar_estado()
-
-     
+        
+        # Cambiar de pantalla
         Clock.schedule_once(lambda dt: setattr(self.manager, 'current', 'controles'), 0.2)
 
     def mostrar_error_ocupado(self):
+        """Se llama cuando el servidor responde JUEZ_OCUPADO"""
+        ws = WebSocketManager()
+        
+        # Revertir la selección local
+        if ws.juez_id in ws.jueces_ocupados:
+            ws.jueces_ocupados.discard(ws.juez_id)
+        ws.juez_id = None
+        
+        self.mensaje_error.text = "[b]Este juez fue seleccionado por otro dispositivo[/b]"
+        Clock.schedule_once(lambda dt: setattr(self.mensaje_error, 'text', ''), 3)
+        self.actualizar_estado()
+        
+        # Si estaba en la pantalla de controles, regresar
+        if self.manager.current == "controles":
+            self.manager.current = "selecjuez"
+    
+    def mostrar_error_posicion_invalida(self):
+        """Se llama cuando el servidor responde POSICION_INVALIDA"""
         ws = WebSocketManager()
         
         if ws.juez_id in ws.jueces_ocupados:
             ws.jueces_ocupados.discard(ws.juez_id)
         ws.juez_id = None
         
-        self.mensaje_error.text = "[b]Este juez fue seleccionado por otro teléfono[/b]"
+        self.mensaje_error.text = "[b]Posición inválida[/b]"
         Clock.schedule_once(lambda dt: setattr(self.mensaje_error, 'text', ''), 3)
         self.actualizar_estado()
 
