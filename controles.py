@@ -55,7 +55,7 @@ class TriangleAlertButton(Button):
         border_offset = dp(3)
         self.triangle_border.points = [
             center_x, center_y + height/2 + border_offset,
-            center_x - width/2 - border_offset, center_y - height/2 - border_offset,
+            center_x - width/2 + -border_offset, center_y - height/2 - border_offset,
             center_x + width/2 + border_offset, center_y - height/2 - border_offset
         ]
 
@@ -89,7 +89,6 @@ class PantallaControles(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.name = "controles"
-        self.botones_habilitados = False  # Nuevo: rastrea el estado de habilitación
         self.build_ui()
 
     def build_ui(self):
@@ -148,65 +147,20 @@ class PantallaControles(Screen):
         main_layout.add_widget(self.plus_btn_rojo)
 
         self.add_widget(main_layout)
-        self.bloquear_botones()
-
 
     def update_bg(self, *args):
         self.bg.size = self.size
         self.bg.pos = self.pos
 
-    def bloquear_botones(self):
-        """Bloquea los botones de suma y actualiza el estado"""
-        self.plus_btn_azul.disabled = True
-        self.plus_btn_rojo.disabled = True
-        self.plus_btn_azul.opacity = 0.35
-        self.plus_btn_rojo.opacity = 0.35
-        self.botones_habilitados = False
-        print("Botones de suma BLOQUEADOS")
-
-    def habilitar_botones(self):
-        """Habilita los botones de suma cuando hay 2+ incidencias"""
-        self.plus_btn_azul.disabled = False
-        self.plus_btn_rojo.disabled = False
-        self.plus_btn_azul.opacity = 1
-        self.plus_btn_rojo.opacity = 1
-        self.botones_habilitados = True
-        print("Botones de suma HABILITADOS")
-
     def reset_puntos_visuales(self):
-        """
-        Se llama cuando hay colores diferentes (RESET_PUNTOS).
-        Solo limpia visuales pero mantiene botones habilitados si ya lo estaban.
-        """
-        print("Reset visual de puntos (mantiene habilitación si ya había 2+ incidencias)")
-        # Aquí podrías limpiar indicadores visuales si los tienes
-        # Por ejemplo, si tienes labels que muestran los puntos seleccionados
-        
-        # NO llamamos a bloquear_botones() aquí
-        # Los botones se mantienen en su estado actual
+        print("Reset visual (sin bloquear botones)")
 
     def reset_ui(self):
-        """
-        Reset completo cuando se calcula el promedio o se reinicia todo.
-        Bloquea botones y limpia todo el estado.
-        """
-        print("Reset completo de UI")
-        self.bloquear_botones()
-        # Aquí reseteas cualquier otro estado visual
+        print("Reset UI (pero NO se bloquean botones)")
 
     def alerta_accion(self, instance):
         print("Marcando incidencia...")
         WebSocketManager().enviar_incidencia()
-        
-        original_color = self.btn_alerta.canvas.before.children[0].rgba
-        with self.btn_alerta.canvas.before:
-            self.btn_alerta.canvas.before.children[0].rgba = (1, 0.5, 0, 1)
-        
-        from kivy.clock import Clock
-        Clock.schedule_once(
-            lambda dt: setattr(self.btn_alerta.canvas.before.children[0], 'rgba', original_color),
-            0.5
-        )
 
     def mostrar_confirmacion(self, instance):
         content = BoxLayout(orientation='vertical', spacing=dp(15), padding=dp(20))
@@ -291,16 +245,10 @@ class PantallaControles(Screen):
         self.manager.current = "pantalla_login"
 
     def go_to_azul(self, instance):
-        if not self.plus_btn_azul.disabled:
-            self.manager.current = "pantalla_azul"
+        self.manager.current = "pantalla_azul"
 
     def go_to_rojo(self, instance):
-        if not self.plus_btn_rojo.disabled:
-            self.manager.current = "pantalla_roja"
+        self.manager.current = "pantalla_roja"
 
     def on_enter(self):
-        """Se llama cada vez que se entra a esta pantalla"""
-        # SIEMPRE bloquear botones al regresar a controles
-        # Solo se habilitan cuando llega HABILITAR_PUNTOS del servidor
-        self.bloquear_botones()
-        print(">>> on_enter: Controles bloqueados, esperando 2+ incidencias")
+        print("Entrando a controles (botones activos siempre)")

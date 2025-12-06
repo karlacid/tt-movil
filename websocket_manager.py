@@ -14,7 +14,7 @@ class WebSocketManager:
 
     juez_id = None
     jueces_ocupados = set()
-    nombre_dispositivo = None  # Nuevo: para identificar el dispositivo
+    nombre_dispositivo = None
 
     def __new__(cls):
         if cls._instance is None:
@@ -22,7 +22,7 @@ class WebSocketManager:
             cls._instance.ws = None
             cls._instance.is_connected = False
             cls._instance.ws_thread = None
-            # Generar un nombre único para el dispositivo
+
             import uuid
             cls._instance.nombre_dispositivo = f"Celular_{str(uuid.uuid4())[:8]}"
         return cls._instance
@@ -62,17 +62,15 @@ class WebSocketManager:
             msg = f"PUNTUAR:NULL,{color.upper()}"
         else:
             msg = f"PUNTUAR:{puntos},{color.upper()}"
-
         self._send_message(msg)
 
     def enviar_incidencia(self, tipo="GENERAL"):
         self._send_message(f"INCIDENCIA:{tipo}")
 
     def enviar_juez_seleccionado(self, juez_numero):
-        # Formato correcto: SELECCIONAR_JUEZ:nombre,posicion
         msg = f"SELECCIONAR_JUEZ:{self.nombre_dispositivo},{juez_numero}"
         self._send_message(msg)
-        Logger.info(f"Solicitando juez {juez_numero} con nombre {self.nombre_dispositivo}")
+        Logger.info(f"Solicitando juez {juez_numero}")
 
     def _on_open(self, ws):
         Logger.info("WebSocket conectado")
@@ -88,10 +86,9 @@ class WebSocketManager:
 
             if estado:
                 pares = estado.split(",")
-
                 for par in pares:
                     if "-" in par:
-                        juez_id, nombre = par.split("-", 1)  # split solo en el primer "-"
+                        juez_id, nombre = par.split("-", 1)
                         if juez_id.isdigit():
                             self.jueces_ocupados.add(int(juez_id))
 
@@ -99,18 +96,16 @@ class WebSocketManager:
 
         elif mensaje == "JUEZ_OCUPADO":
             Clock.schedule_once(lambda dt: self._mostrar_error_ocupado())
-        
+
         elif mensaje == "POSICION_INVALIDA":
             Clock.schedule_once(lambda dt: self._mostrar_error_posicion_invalida())
 
-        elif mensaje == "HABILITAR_PUNTOS":
-            Clock.schedule_once(self._activar_botones, 0)
+        
 
         elif mensaje == "RESET_COMPLETO":
             Clock.schedule_once(self._manejar_reset, 0)
         
         elif mensaje == "RESET_PUNTOS":
-            # Solo resetea puntos visuales, no deshabilita botones
             Clock.schedule_once(self._manejar_reset_puntos, 0)
 
         elif mensaje.startswith("INCIDENCIA_REGISTRADA:"):
@@ -132,7 +127,7 @@ class WebSocketManager:
             pantalla.mostrar_error_ocupado()
         except Exception as e:
             Logger.error(f"Error mostrando mensaje: {e}")
-    
+
     def _mostrar_error_posicion_invalida(self):
         try:
             app = App.get_running_app()
@@ -140,17 +135,6 @@ class WebSocketManager:
             pantalla.mostrar_error_posicion_invalida()
         except Exception as e:
             Logger.error(f"Error mostrando mensaje: {e}")
-
-    def _activar_botones(self, dt):
-        try:
-            Logger.info(">>> Intentando activar botones en pantalla de controles")
-            app = App.get_running_app()
-            pantalla = app.root.get_screen("controles")
-            Logger.info(f">>> Pantalla actual: {app.root.current}")
-            pantalla.habilitar_botones()
-            Logger.info(">>> Botones habilitados exitosamente")
-        except Exception as e:
-            Logger.error(f"Error activando botones: {e}")
 
     def _manejar_reset(self, dt):
         try:
@@ -160,13 +144,13 @@ class WebSocketManager:
                 pantalla.reset_ui()
         except Exception as e:
             Logger.error(f"Error en reset: {e}")
-    
+
     def _manejar_reset_puntos(self, dt):
         try:
             app = App.get_running_app()
             if app.root.current == "controles":
                 pantalla = app.root.get_screen("controles")
-                pantalla.reset_puntos_visuales()  # Nuevo método que solo limpia visualmente
+                pantalla.reset_puntos_visuales()
         except Exception as e:
             Logger.error(f"Error en reset puntos: {e}")
 

@@ -84,7 +84,7 @@ class PantallaColor(Screen):
         self.bind(size=self.update_bg, pos=self.update_bg)
         main_layout.add_widget(Widget(size_hint_y=0.25))
 
-        # === FILA DE NÚMEROS (1 A 5) ===
+       
         layout_botones = BoxLayout(
             orientation="horizontal",
             spacing=dp(20),
@@ -107,7 +107,7 @@ class PantallaColor(Screen):
         layout_botones.width = (dp(90) * 5) + (dp(20) * 4)
         main_layout.add_widget(layout_botones)
 
-        # === BOTÓN NULL ABAJO (OCUPA 3 BOTONES EXACTOS) ===
+        
         color_null = (0, 0.4, 0.8, 1) if self.color_asignado == "AZUL" else (0.7, 0, 0, 1)
 
         btn_null = BotonPuntaje(
@@ -117,7 +117,7 @@ class PantallaColor(Screen):
             pantalla=self
         )
 
-        # 🔥 Ancho exacto de 3 botones + 2 espacios
+       
         btn_null.size = (
             (dp(90) * 3) + (dp(20) * 2),
             dp(90)

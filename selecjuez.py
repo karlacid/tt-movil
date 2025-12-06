@@ -134,22 +134,22 @@ class SeleccJuez(Screen):
             Clock.schedule_once(lambda dt: setattr(self.mensaje_error, 'text', ''), 3)
             return
 
-        # Enviar selección al servidor
+       
         ws.enviar_juez_seleccionado(numero)
         
-        # Actualizar estado local temporalmente
+       
         ws.juez_id = numero
         ws.jueces_ocupados.add(numero)
         self.actualizar_estado()
         
-        # Cambiar de pantalla
+        
         Clock.schedule_once(lambda dt: setattr(self.manager, 'current', 'controles'), 0.2)
 
     def mostrar_error_ocupado(self):
-        """Se llama cuando el servidor responde JUEZ_OCUPADO"""
+       
         ws = WebSocketManager()
         
-        # Revertir la selección local
+       
         if ws.juez_id in ws.jueces_ocupados:
             ws.jueces_ocupados.discard(ws.juez_id)
         ws.juez_id = None
@@ -158,12 +158,12 @@ class SeleccJuez(Screen):
         Clock.schedule_once(lambda dt: setattr(self.mensaje_error, 'text', ''), 3)
         self.actualizar_estado()
         
-        # Si estaba en la pantalla de controles, regresar
+       
         if self.manager.current == "controles":
             self.manager.current = "selecjuez"
     
     def mostrar_error_posicion_invalida(self):
-        """Se llama cuando el servidor responde POSICION_INVALIDA"""
+       
         ws = WebSocketManager()
         
         if ws.juez_id in ws.jueces_ocupados:
