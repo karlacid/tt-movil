@@ -158,10 +158,76 @@ class PantallaControles(Screen):
     def reset_ui(self):
         print("Reset UI (pero NO se bloquean botones)")
 
+    # ------------------------------------------------------------
+    # POPUP DE INCIDENCIA (FORMATO IGUAL A FINALIZAR)
+    # ------------------------------------------------------------
     def alerta_accion(self, instance):
         print("Marcando incidencia...")
         WebSocketManager().enviar_incidencia()
 
+        content = BoxLayout(
+            orientation='vertical',
+            spacing=dp(15),
+            padding=dp(25)
+        )
+
+        lbl_mensaje = Label(
+            text="¡Incidencia reportada!",
+            color=(0.2, 0.6, 1, 1),
+            font_size=sp(22),
+            halign='center',
+            valign='middle',
+            size_hint_y=None,
+            height=dp(80)
+        )
+        content.add_widget(lbl_mensaje)
+
+        btn_ok = Button(
+            text='OK',
+            background_normal='',
+            background_color=(0.2, 0.6, 1, 1),
+            color=(1, 1, 1, 1),
+            bold=True,
+            font_size=sp(18),
+            size_hint_y=None,
+            height=dp(50)
+        )
+        content.add_widget(btn_ok)
+
+        popup = Popup(
+            title="Incidencia",
+            title_color=(0.2, 0.6, 1, 1),
+            title_size=sp(22),
+            title_align='center',
+            content=content,
+            size_hint=(None, None),
+            size=(dp(480), dp(240)),
+            separator_height=0,
+            background='',
+            auto_dismiss=False
+        )
+
+        with popup.canvas.before:
+            Color(0.52, 0.76, 0.75, 0.8)
+            popup.rect = RoundedRectangle(
+                pos=popup.pos,
+                size=popup.size,
+                radius=[dp(10)]
+            )
+
+        def update_popup_rect(instance, value):
+            instance.rect.pos = instance.pos
+            instance.rect.size = instance.size
+
+        popup.bind(pos=update_popup_rect, size=update_popup_rect)
+
+        btn_ok.bind(on_press=popup.dismiss)
+
+        popup.open()
+
+    # ------------------------------------------------------------
+    # POPUP DE FINALIZAR (EL MISMO QUE YA TENÍAS)
+    # ------------------------------------------------------------
     def mostrar_confirmacion(self, instance):
         content = BoxLayout(orientation='vertical', spacing=dp(15), padding=dp(20))
 
