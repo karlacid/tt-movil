@@ -6,7 +6,7 @@ from kivy.logger import Logger
 from kivy.clock import Clock
 from kivy.app import App
 
-SERVER_IP = "localhost" # Cambiar por la IP del servidor
+SERVER_IP = "192.168.0.199" # Cambiar por la IP del servidor
 SERVER_PORT = "8080"
 WS_ENDPOINT = "/ws/juez"
 LOGIN_API_ENDPOINT = "/api/auth/juez/login"
