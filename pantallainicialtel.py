@@ -6,6 +6,7 @@ from kivy.uix.image import Image
 from kivy.uix.widget import Widget
 from kivy.graphics import Color, Rectangle, Ellipse, Line
 from kivy.metrics import dp
+#prueba de cambios
 from estilos import (
     C_FONDO, C_AZUL, C_BLANCO,
     TopBar, SeparadorBicolor, BotonPrincipal,
